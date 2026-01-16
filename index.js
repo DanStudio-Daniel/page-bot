@@ -1,7 +1,7 @@
-const express = require("express");
-const fs = require("fs");
-const bodyParser = require("body-parser");
-const config = require("./config.json");
+import express from "express";
+import fs from "fs";
+import bodyParser from "body-parser";
+import config from "./config.json" assert { type: "json" };
 
 const app = express();
 app.use(bodyParser.json());
