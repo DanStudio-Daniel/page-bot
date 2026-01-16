@@ -1,36 +1,39 @@
-const { GPT4All } = require("gpt4all");
+const gpt4all = require("gpt4all");
 
-let model;
+let model = null;
+
 async function loadModel() {
-  if (!model) {
-    model = new GPT4All("orca-mini-3b.ggmlv3.q4_0.bin", {
-      verbose: false
-    });
-    await model.init();
-  }
+  if (model) return model;
+
+  model = await gpt4all.create({
+    model: "orca-mini-3b.ggmlv3.q4_0.bin",
+    verbose: false
+  });
+
+  return model;
 }
 
 module.exports = {
   name: "ai",
-  description: "Ask the offline AI a question",
-  usage: "ai <your question>",
+  description: "Ask AI",
+  usage: "ai <question>",
   aliases: ["ask", "bot"],
   adminonly: false,
 
   execute: async ({ sender, args, send }) => {
     if (!args.length)
-      return send(sender, "❌ Ask something.\nUsage: ai <question>");
+      return send(sender, "❌ Usage: ai <your question>");
 
-    await loadModel();
+    const ai = await loadModel();
 
     const prompt = args.join(" ");
 
-    const response = await model.prompt(prompt, {
+    const reply = await ai.generate(prompt, {
       maxTokens: 200,
       temperature: 0.7
     });
 
-    await send(sender, response.slice(0, 1800));
+    await send(sender, reply.slice(0, 1800));
   }
 };
-  
+                                    
