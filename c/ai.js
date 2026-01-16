@@ -1,44 +1,41 @@
+const { spawn } = require("child_process");
 const path = require("path");
-const {
-  LlamaModel,
-  LlamaContext,
-  LlamaChatSession
-} = require("node-llama-cpp");
-
-let session;
-
-async function loadModel() {
-  if (session) return session;
-
-  const model = new LlamaModel({
-    modelPath: path.join(__dirname, "../models/tinyllama.gguf")
-  });
-
-  const context = new LlamaContext({ model });
-  session = new LlamaChatSession({ context });
-
-  return session;
-}
 
 module.exports = {
   name: "ai",
-  description: "AI chat",
-  usage: "ai <message>",
-  aliases: ["ask"],
+  description: "Offline AI chat (no billing, local model)",
+  usage: "ai <your question>",
+  aliases: ["ask", "bot"],
   adminonly: false,
 
   execute: async ({ sender, args, send }) => {
-    if (!args.length)
-      return send(sender, "❌ Usage: ai <message>");
+    if (!args.length) {
+      return send(sender, "❌ Usage: ai <your question>");
+    }
 
-    const chat = await loadModel();
     const prompt = args.join(" ");
 
-    const reply = await chat.prompt(prompt, {
-      maxTokens: 200
-    });
+    const llamaPath = path.join(__dirname, "../bin/llama");
+    const modelPath = path.join(__dirname, "../models/tinyllama.gguf");
 
-    await send(sender, reply.slice(0, 1800));
+    const proc = spawn(llamaPath, [
+      "-m", modelPath,
+      "-p", prompt,
+      "-n", "200",
+      "--temp", "0.7"
+    ]);
+
+    let output = "";
+    let error = "";
+
+    proc.stdout.on("data", d => output += d.toString());
+    proc.stderr.on("data", d => error += d.toString());
+
+    proc.on("close", () => {
+      if (error) {
+        return send(sender, "❌ AI error:\n" + error.slice(0, 1500));
+      }
+      send(sender, output.slice(0, 1800));
+    });
   }
 };
-      
