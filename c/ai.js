@@ -1,40 +1,44 @@
-let model = null;
+const path = require("path");
+const {
+  LlamaModel,
+  LlamaContext,
+  LlamaChatSession
+} = require("node-llama-cpp");
+
+let session;
 
 async function loadModel() {
-  if (model) return model;
+  if (session) return session;
 
-  const { GPT4All } = await import("gpt4all");
-
-  model = new GPT4All({
-    model: "orca-mini-3b.ggmlv3.q4_0.bin",
-    verbose: false
+  const model = new LlamaModel({
+    modelPath: path.join(__dirname, "../models/tinyllama.gguf")
   });
 
-  await model.init();
-  return model;
+  const context = new LlamaContext({ model });
+  session = new LlamaChatSession({ context });
+
+  return session;
 }
 
 module.exports = {
   name: "ai",
-  description: "Ask the offline AI (no billing)",
-  usage: "ai <question>",
-  aliases: ["ask", "bot"],
+  description: "AI chat",
+  usage: "ai <message>",
+  aliases: ["ask"],
   adminonly: false,
 
   execute: async ({ sender, args, send }) => {
-    if (!args.length) {
-      return send(sender, "❌ Usage: ai <your question>");
-    }
+    if (!args.length)
+      return send(sender, "❌ Usage: ai <message>");
 
-    const ai = await loadModel();
+    const chat = await loadModel();
     const prompt = args.join(" ");
 
-    const response = await ai.prompt(prompt, {
-      maxTokens: 200,
-      temperature: 0.7
+    const reply = await chat.prompt(prompt, {
+      maxTokens: 200
     });
 
-    await send(sender, response.slice(0, 1800));
+    await send(sender, reply.slice(0, 1800));
   }
 };
       
