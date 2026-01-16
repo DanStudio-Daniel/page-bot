@@ -1,6 +1,6 @@
 {
   "name": "fb-pagebot",
-  "version": "1.4.0",
+  "version": "1.4.5",
   "description": "Facebook Page Bot with Offline AI via llama.cpp CLI",
   "main": "index.js",
   "type": "commonjs",
@@ -8,7 +8,7 @@
     "start": "node index.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "dependencies": {
     "express": "^4.18.2",
